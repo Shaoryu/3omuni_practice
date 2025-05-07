@@ -1,20 +1,7 @@
-#define SERVO_DEG 160
-#define PREPARE_DEG 60
-#define STREIGHT_HIGH_TORQUE 3500 // 1800
-#define STREIGHT_LOW_TORQUE (STREIGHT_HIGH_TORQUE / 2)
-#define ROTE_HIGH_TORQUE 4500 // 3000
-#define ROTE_LOW_TORQUE (ROTE_HIGH_TORQUE / 2)
-// #define SPEED 200
-
 #include "mbed.h"
-#include "im920_can_lib.h"
+#include "ps5_can_lib.h"
 #include "rbms.h"
 
-enum motor{
-    L, 
-    R, 
-    MOTOR_NUM
-};
 
 enum Ps5{
     NONE = -1,
@@ -23,28 +10,18 @@ enum Ps5{
 };
 
 BufferedSerial pc(USBTX, USBRX, 9600);
-CAN can1(PB_8, PB_9,1000000);
-CAN can2(PB_12, PB_6,1000000);
+CAN can1(PA_11, PA_12,1000000);
+CAN can2(PB_12, PB_13,1000000);
 CANMessage msg;
 can920 ps5(can1, 1);
-rbms motor(can2, 0, MOTOR_NUM);
-PwmOut servo(PC_8); // PC_8
-DigitalOut led(LED1);
+rbms motor(can2, 0, 3);
+
 Thread thread_spd, thread_can;
 
-int torque[MOTOR_NUM], speed[MOTOR_NUM];
-int deg;
+int torque[3], speed[3];
 int val;
 int data[PS5::ALL_BUTTON], data_pre[PS5::ALL_BUTTON];
 bool stop;
-
-int Degree_to_Pulsewidth_us(int);
-
-void up();
-void down();
-void right_rote();
-void left_rote();
-void brake();
 void speed_control();
 void can_receive();
 
@@ -54,52 +31,20 @@ int main()
     can1.mode(CAN::Normal);
     can2.frequency(1000000);
     can2.mode(CAN::Normal);
-    servo.period(0.020);
     ps5.setup(10);
-    brake();
 
-    // thread_spd.start(speed_control);
-    // thread_can.start(can_receive);
+    thread_spd.start(speed_control);
+    thread_can.start(can_receive);
     ThisThread::sleep_for(100ms);
     while (true){
         val = ps5.get_data(data,&stop);
         if(val == 1){
-            if(data[PS5::UP]){
-                led = !led;
-                up();
-            }else if(data[PS5::DOWN]){
-                led = !led;
-                down();
-            }else if(data[PS5::R1]){
-                led = !led;
-                right_rote();
-            }else if(data[PS5::L1]){
-                led = !led;
-                left_rote();
-            }else if(data[PS5::TRIANGLE] && data[PS5::R2] && data[PS5::L2]){
-                led = !led;
-                deg = SERVO_DEG;
-            }else if(data[PS5::CROSS]){
-                led = !led;
-                deg = PREPARE_DEG;
-            }
-            else{
-                brake();
-            }
+            
         }else if(val == -1){
-            brake();
+            
         }
-
-        if(data[PS5::PSBUTTON]){
-            printf("emergency!!! system reset ");
-            NVIC_SystemReset();
-        }else{
-            printf("send\r\n");
-            motor.rbms_send(torque);
-            servo.pulsewidth_us(Degree_to_Pulsewidth_us(deg));
-            printf("torque: L:%4d R:%4d, deg: %3d ", torque[L], torque[R], deg);
-        }       
-
+    
+        motor.rbms_send(torque);
         ThisThread::sleep_for(50ms);
     }
 }
@@ -110,81 +55,3 @@ int Degree_to_Pulsewidth_us(int degree){
     return pulsewidth_us;
 }
 
-void up(){
-    printf("up ");
-    if(!data[PS5::L2]){
-        printf("high mode\r\n");
-        torque[L] = -STREIGHT_HIGH_TORQUE;
-        torque[R] = STREIGHT_HIGH_TORQUE;
-        // speed[L] = -SPEED;
-        // speed[R] = SPEED;
-    }else{
-        printf("low mode\r\n");
-        torque[L] = -STREIGHT_LOW_TORQUE;
-        torque[R] = STREIGHT_LOW_TORQUE;
-    }
-}
-
-void down(){
-    printf("down ");
-    if(!data[PS5::L2]){
-        printf("high mode\r\n");
-        torque[L] = STREIGHT_HIGH_TORQUE;
-        torque[R] = -STREIGHT_HIGH_TORQUE;
-        // speed[L] = SPEED;
-        // speed[R] = -SPEED;
-    }else{
-        printf("low mode\r\n");
-        torque[L] = STREIGHT_LOW_TORQUE;
-        torque[R] = -STREIGHT_LOW_TORQUE;
-    }
-}
-
-void right_rote(){
-    printf("right_rote ");
-    if(!data[PS5::L2]){
-        printf("high mode\r\n");
-        torque[L] = ROTE_HIGH_TORQUE;
-        torque[R] = ROTE_HIGH_TORQUE;
-        // speed[L] = SPEED;
-        // speed[R] = SPEED;
-    }else{
-        printf("low mode\r\n");
-        torque[L] = ROTE_LOW_TORQUE;
-        torque[R] = ROTE_LOW_TORQUE;
-    }
-}
-
-void left_rote(){
-    printf("left_rote ");
-    if(!data[PS5::L2]){
-        printf("high mode\r\n");
-        torque[L] = -ROTE_HIGH_TORQUE;
-        torque[R] = -ROTE_HIGH_TORQUE;
-        // speed[L] = -SPEED;
-        // speed[R] = -SPEED;
-    }else{
-        printf("low mode\r\n");
-        torque[L] = -ROTE_LOW_TORQUE;
-        torque[R] = -ROTE_LOW_TORQUE;
-    }
-}
-
-void brake(){
-    printf("brake\r\n");
-    torque[L] = 0;
-    torque[R] = 0;
-    // speed[L] = 0;
-    // speed[R] = 0;
-    deg = 0;
-}
-
-void speed_control(){
-    while(true){
-        motor.spd_control(speed, torque);
-    }
-}
-
-void can_receive(){
-    motor.can_read();
-}
