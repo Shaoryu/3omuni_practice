@@ -28,7 +28,7 @@ int main(){
 
             if(data[PS5::CIRCLE])printf("○");
             if(data[PS5::CROSS])printf("×");
-            if(data[PS5::TRIANGLE])printf("○");
+            if(data[PS5::TRIANGLE])printf("△");
             if(data[PS5::SQUARE])printf("□");
             printf("\r\n");
         }else if(val==-1){//確かデータに変化なし
