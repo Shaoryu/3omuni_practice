@@ -19,6 +19,11 @@ UnbufferedSerial pc(USBTX, USBRX, 9600);
 Thread thread1, thread_can;
 
 
+
+
+int torque[3] = {0};
+int set_speed[3] = {0};
+
 void can_receive(){
     motor.can_read();
 } 
@@ -26,10 +31,6 @@ void can_receive(){
 void speed_control(){
     motor.spd_control(set_speed, torque); 
 }
-
-
-int torque[3] = {0};
-int set_speed[3] = {0};
 
 
 int main(){
