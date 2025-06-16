@@ -8,8 +8,8 @@ enum {
 
 
 //コンストラクタ
-CAN canmotor(PB_5,PB_6,1000000);
-
+CAN canmotor(PB_12,PB_13,1000000);//テスト用基板
+//CAN canmotor(PB_5,PB_6,1000000);//河上先輩用基板
 rbms motor(canmotor, m2006, 3);//関数名(canの,0 or 1,モーターの数)
 UnbufferedSerial pc(USBTX, USBRX, 9600);
 
