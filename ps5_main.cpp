@@ -1,5 +1,5 @@
 #include "mbed.h"
-#include "ps5_can_lib.h"
+#include "im920_can_lib.h"
 //2行目は指示によって変わる
 
 CAN can(PA_11,PA_12,1000000);
