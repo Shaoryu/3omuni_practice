@@ -9,7 +9,8 @@
 
 UnbufferedSerial pc(USBTX, USBRX, 9600);
 CANMessage msg, buffer_motor[BUFFER_MAX];
-CAN can(PD_0, PD_1);
+CAN can(PB_12,PB_13,1000000);//テスト用基板
+//CAN can(PB_5,PB_6,1000000);//河上先輩用基板
 rbms m2006(can, 0, TOTAL_MOTOR); // canの実体, モータータイプ(m2006...0, m3508...1), モーターの数
 rote_robo_ms rote_robo_ms_motor1(can, m2006, 0,16); // canの実体, rbmsの実体, 制御するモーターのid, モーターにつけた回転体の半径(この引数はなくても動作する)
 Thread thread1, thread_can;
