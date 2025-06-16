@@ -4,7 +4,7 @@
 
 CAN can(PA_11,PA_12,1000000);
 CAN canmotor(PB_12,PB_13,1000000);//テスト用基板
-//CAN canmotor(PB_5,PB_6,1000000);//テスト用基板
+//CAN canmotor(PB_5,PB_6,1000000);//河上先輩用基板
 
 can920 ps5(can,1);//canの,ノード番号(1固定なはず)
 
